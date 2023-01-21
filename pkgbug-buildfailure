@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+# open a browser with template for filing build failure bug for pkg ${1}
+
+set -e
+
+if [[ ${#} -ne 1 ]]; then
+	echo "${0} needs a package name as single argument, e.g. dev-util/dialog"
+	exit 1
+fi
+
+scriptdir=${BASH_SOURCE%/*}
+pkg=${1}
+pkg_c=$(qatom -F "%{CATEGORY}/%{PN}" ${pkg})
+
+# emerge_info output is too long to insert...
+#emerge_info=$(emerge --info | urlencode)
+
+emerge_info="Please insert the output of
+
+emerge --info ${pkg_c}
+
+here"
+
+PORTAGE_LOGDIR=$(portageq envvar PORTAGE_LOGDIR)
+LOGFILENAME=${PORTAGE_LOGDIR}/$(qatom -F "%{CATEGORY}:%{P}" ${pkg})
+
+echo $LOGFILENAME
+
+exec xdg-open "https://bugs.gentoo.org/enter_bug.cgi?product=Gentoo%20Linux&component=Current+packages&short_desc=$("${scriptdir}"/urlencode <<<"${pkg}: build failed")&comment=${emerge_info}"
